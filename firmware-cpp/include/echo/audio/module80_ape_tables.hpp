@@ -1,0 +1,52 @@
+#pragma once
+
+#include <array>
+#include <cstdint>
+
+namespace echo::audio {
+
+// Exact little-endian halfwords copied from module_80.data.bin. The decoder
+// routine consumes cumulative bounds and range scales as separate arrays.
+// Entries beyond the normal symbol range are retained as observed sentinels.
+struct Module80ApeRangeTable {
+    std::array<std::uint16_t, 22> cumulative;
+    std::array<std::uint16_t, 22> range_scale;
+};
+
+inline constexpr Module80ApeRangeTable kModule80ApeRangeTableA{
+    {0x0000, 0x39e8, 0x6e40, 0x99b4, 0xbaef, 0xd2ea, 0xe33b, 0xedfe,
+     0xf4da, 0xf92a, 0xfbcf, 0xfd6e, 0xfe66, 0xfefc, 0xff55, 0xff8b,
+     0xffaa, 0xffbd, 0xffc8, 0xffcf, 0xffd3, 0xffd5},
+    {0x39e8, 0x3458, 0x2b74, 0x213b, 0x17fb, 0x1051, 0x0ac3, 0x06dc,
+     0x0450, 0x02a5, 0x019f, 0x00f8, 0x0096, 0x0059, 0x0036, 0x001f,
+     0x0013, 0x000b, 0x0007, 0x0004, 0x0002, 0x0000}};
+
+inline constexpr Module80ApeRangeTable kModule80ApeRangeTableB{
+    {0x0000, 0x4c7a, 0x8d40, 0xbd21, 0xdc03, 0xede3, 0xf721, 0xfbb3,
+     0xfdcb, 0xfed0, 0xff47, 0xff88, 0xffa7, 0xffba, 0xffc4, 0xffca,
+     0xffcd, 0xffd0, 0xffd2, 0xffd3, 0xffd4, 0xffd5},
+    {0x4c7a, 0x40c6, 0x2fe1, 0x1ee2, 0x11e0, 0x093e, 0x0492, 0x0218,
+     0x0105, 0x0077, 0x0041, 0x001f, 0x0013, 0x000a, 0x0006, 0x0003,
+     0x0003, 0x0002, 0x0001, 0x0001, 0x0001, 0x0000}};
+
+// The adaptation code indexes this boundary vector at k and k + 1. The
+// zero word following 0x80000000 is present in the image but is not a valid
+// upper boundary for another model state.
+inline constexpr std::array<std::uint32_t, 28> kModule80ApeModelBoundaries{
+    0x00000000, 0x00000020, 0x00000040, 0x00000080,
+    0x00000100, 0x00000200, 0x00000400, 0x00000800,
+    0x00001000, 0x00002000, 0x00004000, 0x00008000,
+    0x00010000, 0x00020000, 0x00040000, 0x00080000,
+    0x00100000, 0x00200000, 0x00400000, 0x00800000,
+    0x01000000, 0x02000000, 0x04000000, 0x08000000,
+    0x10000000, 0x20000000, 0x40000000, 0x80000000};
+
+// FUN_01002ee4 selects the first row below version 0x0f96 (3990) and the
+// second row at or above it.
+[[nodiscard]] constexpr const Module80ApeRangeTable&
+module80_ape_range_table_for_version(std::uint16_t version) noexcept {
+    return version < 0x0f96 ? kModule80ApeRangeTableA
+                            : kModule80ApeRangeTableB;
+}
+
+} // namespace echo::audio
