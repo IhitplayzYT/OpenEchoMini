@@ -29,7 +29,15 @@ public:
     [[nodiscard]] bool read_sectors(
         std::uint32_t device_key, std::uint32_t first_sector,
         std::uint32_t sector_count, std::span<std::uint8_t> output) override;
+    // Keep the firmware callback's status for callers that need its exact code.
+    // The SectorBackend adapter below intentionally reduces it to success/fail.
+    [[nodiscard]] int read_sectors_status(
+        std::uint32_t device_key, std::uint32_t first_sector,
+        std::uint32_t sector_count, std::span<std::uint8_t> output);
     [[nodiscard]] bool write_sectors(
+        std::uint32_t device_key, std::uint32_t first_sector,
+        std::uint32_t sector_count, std::span<const std::uint8_t> input);
+    [[nodiscard]] int write_sectors_status(
         std::uint32_t device_key, std::uint32_t first_sector,
         std::uint32_t sector_count, std::span<const std::uint8_t> input);
 

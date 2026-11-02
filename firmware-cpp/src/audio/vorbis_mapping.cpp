@@ -1,6 +1,7 @@
 #include "echo/audio/vorbis_mapping.hpp"
 
 #include <cstdint>
+#include <limits>
 
 namespace echo::audio {
 namespace {
@@ -109,6 +110,56 @@ std::optional<VorbisMapping0> parse_vorbis_mapping0(
     }
     mapping.bits_consumed = bits.bit_offset();
     return mapping;
+}
+
+bool apply_vorbis_inverse_coupling(
+    const VorbisMapping0& mapping,
+    std::span<std::vector<std::int32_t>> channel_spectra,
+    std::size_t bin_count) {
+    for (const auto& step : mapping.coupling_steps) {
+        if (step.first >= channel_spectra.size() ||
+            step.second >= channel_spectra.size() || step.first == step.second ||
+            bin_count > channel_spectra[step.first].size() ||
+            bin_count > channel_spectra[step.second].size()) {
+            return false;
+        }
+    }
+
+    for (auto coupling = mapping.coupling_steps.rbegin();
+         coupling != mapping.coupling_steps.rend(); ++coupling) {
+        auto& magnitude = channel_spectra[coupling->first];
+        auto& angle = channel_spectra[coupling->second];
+        for (std::size_t bin = 0; bin < bin_count; ++bin) {
+            const auto m = magnitude[bin];
+            const auto a = angle[bin];
+            std::int64_t next_magnitude = m;
+            std::int64_t next_angle = a;
+
+            if (m < 1) {
+                if (a < 1) {
+                    next_angle = m;
+                    next_magnitude = static_cast<std::int64_t>(m) - a;
+                } else {
+                    next_angle = static_cast<std::int64_t>(m) + a;
+                }
+            } else if (a > 0) {
+                next_angle = static_cast<std::int64_t>(m) - a;
+            } else {
+                next_angle = m;
+                next_magnitude = static_cast<std::int64_t>(m) + a;
+            }
+
+            if (next_magnitude < std::numeric_limits<std::int32_t>::min() ||
+                next_magnitude > std::numeric_limits<std::int32_t>::max() ||
+                next_angle < std::numeric_limits<std::int32_t>::min() ||
+                next_angle > std::numeric_limits<std::int32_t>::max()) {
+                return false;
+            }
+            magnitude[bin] = static_cast<std::int32_t>(next_magnitude);
+            angle[bin] = static_cast<std::int32_t>(next_angle);
+        }
+    }
+    return true;
 }
 
 } // namespace echo::audio

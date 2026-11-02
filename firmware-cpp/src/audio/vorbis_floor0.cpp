@@ -97,13 +97,23 @@ std::optional<VorbisFloor0Packet> decode_vorbis_floor0_packet(
     std::span<const std::uint8_t> packet,
     const VorbisFloor0Setup& setup,
     const VorbisFloor0VectorDecode& decode_vector) {
-    if (setup.order == 0 || setup.amplitude_bits > 16 || setup.books.empty() ||
+    std::size_t bit_offset = 0;
+    return decode_vorbis_floor0_packet(packet, bit_offset, setup, decode_vector);
+}
+
+std::optional<VorbisFloor0Packet> decode_vorbis_floor0_packet(
+    std::span<const std::uint8_t> packet,
+    std::size_t& bit_offset,
+    const VorbisFloor0Setup& setup,
+    const VorbisFloor0VectorDecode& decode_vector) {
+    if (setup.order == 0 || setup.amplitude_bits > 32 || setup.books.empty() ||
         setup.books.size() > 256 ||
         setup.books.size() != setup.book_dimensions.size() || !decode_vector) {
         return std::nullopt;
     }
 
-    std::size_t bit_offset = 0;
+    if (bit_offset > packet.size() * 8) return std::nullopt;
+    const auto start_offset = bit_offset;
     std::uint32_t amplitude = 0;
     if (!read_lsb(packet, bit_offset, setup.amplitude_bits, amplitude)) return std::nullopt;
 
@@ -111,7 +121,7 @@ std::optional<VorbisFloor0Packet> decode_vorbis_floor0_packet(
     result.amplitude = amplitude;
     if (amplitude == 0) {
         result.present = false;
-        result.bits_consumed = bit_offset;
+        result.bits_consumed = bit_offset - start_offset;
         return result;
     }
 
@@ -159,12 +169,12 @@ std::optional<VorbisFloor0Packet> decode_vorbis_floor0_packet(
         accumulator = result.lsp_values.back();
     }
 
-    const auto amplitude_max = (1U << setup.amplitude_bits) - 1U;
+    const auto amplitude_max = (std::uint64_t{1} << setup.amplitude_bits) - 1U;
     const auto gain = static_cast<std::uint64_t>(setup.amplitude_offset) *
-        amplitude * 16U / amplitude_max;
+        static_cast<std::uint64_t>(amplitude) * 16U / amplitude_max;
     if (gain > std::numeric_limits<std::uint32_t>::max()) return std::nullopt;
     result.gain_numerator = static_cast<std::uint32_t>(gain);
-    result.bits_consumed = bit_offset;
+    result.bits_consumed = bit_offset - start_offset;
     return result;
 }
 

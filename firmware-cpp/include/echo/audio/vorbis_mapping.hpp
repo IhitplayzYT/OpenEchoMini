@@ -31,4 +31,11 @@ struct VorbisMapping0 {
     std::uint16_t floor_count,
     std::uint16_t residue_count);
 
+// Applies the firmware's reverse-order inverse channel-coupling pass to the
+// requested spectral prefix of each channel.
+[[nodiscard]] bool apply_vorbis_inverse_coupling(
+    const VorbisMapping0& mapping,
+    std::span<std::vector<std::int32_t>> channel_spectra,
+    std::size_t bin_count);
+
 } // namespace echo::audio

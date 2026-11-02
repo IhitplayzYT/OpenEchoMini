@@ -47,4 +47,12 @@ using VorbisFloor0VectorDecode = std::function<std::optional<std::vector<std::in
     const VorbisFloor0Setup& setup,
     const VorbisFloor0VectorDecode& decode_vector);
 
+// Continues decoding at a shared packet bit cursor, allowing the floor to
+// follow the packet-mode prefix without copying or rebasing packet bytes.
+[[nodiscard]] std::optional<VorbisFloor0Packet> decode_vorbis_floor0_packet(
+    std::span<const std::uint8_t> packet,
+    std::size_t& bit_offset,
+    const VorbisFloor0Setup& setup,
+    const VorbisFloor0VectorDecode& decode_vector);
+
 } // namespace echo::audio

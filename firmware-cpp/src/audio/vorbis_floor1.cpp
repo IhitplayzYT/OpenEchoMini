@@ -36,6 +36,15 @@ std::optional<VorbisFloor1Packet> decode_vorbis_floor1_packet(
     std::span<const std::uint8_t> packet,
     const VorbisFloor1Setup& setup,
     const VorbisFloorCodebookDecode& decode_scalar) {
+    std::size_t bit_offset = 0;
+    return decode_vorbis_floor1_packet(packet, bit_offset, setup, decode_scalar);
+}
+
+std::optional<VorbisFloor1Packet> decode_vorbis_floor1_packet(
+    std::span<const std::uint8_t> packet,
+    std::size_t& bit_offset,
+    const VorbisFloor1Setup& setup,
+    const VorbisFloorCodebookDecode& decode_scalar) {
     if (setup.y_range == 0 || setup.x_list.size() < 2 ||
         setup.low_neighbor.size() != setup.x_list.size() ||
         setup.high_neighbor.size() != setup.x_list.size() ||
@@ -43,7 +52,8 @@ std::optional<VorbisFloor1Packet> decode_vorbis_floor1_packet(
         return std::nullopt;
     }
 
-    std::size_t bit_offset = 0;
+    if (bit_offset > packet.size() * 8) return std::nullopt;
+    const auto start_offset = bit_offset;
     std::uint32_t value = 0;
     if (!read_lsb(packet, bit_offset, 1, value)) return std::nullopt;
 
@@ -52,7 +62,7 @@ std::optional<VorbisFloor1Packet> decode_vorbis_floor1_packet(
     result.y.assign(setup.x_list.size(), 0);
     result.active.assign(setup.x_list.size(), false);
     if (!result.present) {
-        result.bits_consumed = bit_offset;
+        result.bits_consumed = bit_offset - start_offset;
         return result;
     }
 
@@ -163,7 +173,7 @@ std::optional<VorbisFloor1Packet> decode_vorbis_floor1_packet(
         result.active[i] = true;
     }
 
-    result.bits_consumed = bit_offset;
+    result.bits_consumed = bit_offset - start_offset;
     return result;
 }
 

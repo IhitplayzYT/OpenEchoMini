@@ -93,7 +93,12 @@ add_executable(echo-fw-inspect
     src/audio/wav_container.cpp
     src/audio/module76_ima_adpcm.cpp
     src/audio/vorbis_mapping.cpp
+    src/audio/vorbis_packet_mode.cpp
+    src/audio/vorbis_inverse_transform.cpp
     src/audio/vorbis_codebook.cpp
+    src/audio/vorbis_codebook_callbacks.cpp
+    src/audio/vorbis_residue.cpp
+    src/audio/vorbis_residue_packet.cpp
     src/audio/vorbis_floor1.cpp
     src/audio/vorbis_floor1_setup.cpp
     src/audio/vorbis_floor1_synthesis.cpp
@@ -107,6 +112,8 @@ add_executable(echo-fw-inspect
     src/display/word_text.cpp
     src/display/lcd_window.cpp
     src/display/utf8_bmp.cpp
+    src/radio/module84_device_record.cpp
+    src/radio/module84_controller_protocol.cpp
     src/firmware_image.cpp
     src/resource_catalog.cpp
     src/resources/embedded_image.cpp
@@ -137,16 +144,33 @@ add_executable(echo-fw-inspect
     src/runtime/task_mode_table.cpp
     src/runtime/unsigned_divide.cpp
     src/storage/directory_order.cpp
+    src/storage/module0_directory_name_match.cpp
+    src/storage/module0_directory_set_checksum.cpp
+    src/storage/module0_name_hash.cpp
     src/storage/block_reader.cpp
     src/storage/block_device_registry.cpp
     src/storage/directory_prefix.cpp
     src/storage/fixed_record_index.cpp
+    src/storage/module85_stream_record_index.cpp
     src/storage/cue_text_encoding.cpp
     src/storage/path_components.cpp
     src/storage/browser_file_types.cpp
     src/storage/sorted_directory_index.cpp
     src/storage/module34_catalog.cpp
     src/storage/module8_transfer.cpp
+    src/storage/module0_selection_navigation.cpp
+    src/storage/module0_extension_filter.cpp
+    src/storage/module0_browser_count_cache.cpp
+    src/storage/module0_directory_bucket_index.cpp
+    src/storage/module0_fixed_browser_records.cpp
+    src/storage/module0_browser_name_key.cpp
+    src/storage/module0_browser_navigation.cpp
+    src/storage/module0_browser_catalog_record.cpp
+    src/storage/module0_queued_wide_name.cpp
+    src/storage/module0_fat_directory_filter.cpp
+    src/storage/module0_fat_directory_record.cpp
+    src/storage/module0_fat_volume.cpp
+    src/storage/module0_mbr_probe.cpp
     src/storage/module23_name_hash.cpp
     src/storage/module23_sort_info.cpp
     src/storage/module31_word_reader.cpp

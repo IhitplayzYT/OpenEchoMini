@@ -59,4 +59,12 @@ using VorbisFloorCodebookDecode = std::function<std::optional<std::int32_t>(
     const VorbisFloor1Setup& setup,
     const VorbisFloorCodebookDecode& decode_scalar);
 
+// Continues decoding at a shared packet bit cursor, allowing floor and residue
+// stages to consume one contiguous audio packet.
+[[nodiscard]] std::optional<VorbisFloor1Packet> decode_vorbis_floor1_packet(
+    std::span<const std::uint8_t> packet,
+    std::size_t& bit_offset,
+    const VorbisFloor1Setup& setup,
+    const VorbisFloorCodebookDecode& decode_scalar);
+
 } // namespace echo::audio

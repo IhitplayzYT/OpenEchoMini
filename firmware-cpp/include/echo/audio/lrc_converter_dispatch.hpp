@@ -43,12 +43,6 @@ struct LrcCompatibilityRange {
     std::uint16_t output_first{};
 };
 
-struct LrcRuntimeMapSelection {
-    std::uint8_t state_selector{};
-    std::uint8_t map_index{};
-    std::size_t image_offset{};
-};
-
 // Module 27 dispatches conversion by the encoding ID stored in its sidecar
 // context. A UTF-8 BOM selects the nonzero converter with mode 3; the zero-ID
 // entry selects legacy mode. Other nonzero encoding IDs also use the UTF-8
@@ -85,21 +79,5 @@ lookup_lrc_compatibility_codepoint(std::uint16_t input) noexcept;
 lookup_lrc_secondary_fallback(
     std::span<const std::uint8_t> table,
     std::uint16_t logical_pair) noexcept;
-
-// Resolves the selector indirection observed in FUN_03055928 against a full
-// firmware image: selector byte at image offset 0x45c8, map base 0x1c45c,
-// and 0x20000-byte map stride.
-[[nodiscard]] std::optional<LrcRuntimeMapSelection>
-select_lrc_runtime_map(
-    std::span<const std::uint8_t> firmware_image,
-    std::uint8_t state_selector) noexcept;
-
-// Reads one big-endian input-unit mapping from the selected runtime map.
-// Missing or zero non-NUL slots return nullopt.
-[[nodiscard]] std::optional<std::uint16_t>
-lookup_lrc_runtime_map(
-    std::span<const std::uint8_t> firmware_image,
-    std::uint8_t state_selector,
-    std::uint16_t input_unit) noexcept;
 
 } // namespace echo::audio

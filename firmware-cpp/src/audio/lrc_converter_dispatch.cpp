@@ -191,42 +191,4 @@ std::optional<std::uint16_t> lookup_lrc_secondary_fallback(
                       : std::optional<std::uint16_t>{value};
 }
 
-std::optional<LrcRuntimeMapSelection> select_lrc_runtime_map(
-    const std::span<const std::uint8_t> firmware_image,
-    const std::uint8_t state_selector) noexcept {
-    constexpr std::size_t kSelectorTableOffset = 0x45c8;
-    constexpr std::size_t kMapBaseOffset = 0x1c45c;
-    constexpr std::size_t kMapStride = 0x20000;
-    if (kSelectorTableOffset > firmware_image.size() ||
-        firmware_image.size() - kSelectorTableOffset <= state_selector) {
-        return std::nullopt;
-    }
-    const auto map_index = firmware_image[kSelectorTableOffset + state_selector];
-    const auto map_offset = kMapBaseOffset +
-        static_cast<std::size_t>(map_index) * kMapStride;
-    if (map_offset > firmware_image.size() ||
-        firmware_image.size() - map_offset < kMapStride) {
-        return std::nullopt;
-    }
-    return LrcRuntimeMapSelection{state_selector, map_index, map_offset};
-}
-
-std::optional<std::uint16_t> lookup_lrc_runtime_map(
-    const std::span<const std::uint8_t> firmware_image,
-    const std::uint8_t state_selector,
-    const std::uint16_t input_unit) noexcept {
-    const auto selection = select_lrc_runtime_map(firmware_image, state_selector);
-    if (!selection) return std::nullopt;
-    const auto offset = selection->image_offset +
-        static_cast<std::size_t>(input_unit) * 2;
-    if (offset > firmware_image.size() || firmware_image.size() - offset < 2) {
-        return std::nullopt;
-    }
-    const auto value = static_cast<std::uint16_t>(
-        (static_cast<std::uint16_t>(firmware_image[offset]) << 8U) |
-        firmware_image[offset + 1]);
-    if (input_unit != 0 && value == 0) return std::nullopt;
-    return value;
-}
-
 } // namespace echo::audio

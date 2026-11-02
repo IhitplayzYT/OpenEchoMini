@@ -19,6 +19,16 @@ RGB565 masks, matching the supplied v3.9 reference assets. It also writes an
 ROCK26 index, region-relative pixel offset, and absolute firmware offset.
 Firmware pixel words are read high-byte first and written in BMP's little-endian
 pixel representation.
+
+## Build target status
+
+The current CMake product is the host executable `echo-fw-inspect`; it is not
+an Echo Mini firmware binary. The reconstructed helpers are selected,
+hardware-neutral behavior models and do not yet provide the device startup,
+linker map, complete peripheral/runtime services, or firmware-image packaging
+needed for a drop-in replacement. No flashable image or on-device validation
+has been produced. The full device-compatible build remains the project goal,
+not a capability of the current build.
 The inspector also parses the eight-word module records. It maps non-empty
 code and data records to file offsets using the RKnano load-base rule and checks
 each extent against the HIFIEC40 file. Pass `--export-modules <directory>` to
@@ -144,9 +154,52 @@ require analysis.
 - `runtime/module0_memory.hpp` models module 0's byte fill and bounded
   zero-padded string-copy helpers, including calls shared into the image overlay.
 - `include/echo/storage/`: block, directory, path, record and CUE text helpers.
+  `TwoSlotBlockDeviceRegistry` maps two 0x28-byte firmware descriptors and
+  exposes status-preserving callbacks alongside the boolean sector-reader
+  interface; the global lock and hardware callbacks are not implemented.
+  `runtime/module0_block_io_lock.hpp` plans the recursive lock's global
+  critical sections, IRQ 26/27 masking and deferred PendSV behavior without
+  issuing target register writes.
+  `storage/module0_nand_io_plan.hpp` models the key-3 callback's partition
+  offsets, reserved-sector prefix and bounds; it does not perform I/O.
+  `storage/module0_media_detect_state.hpp` models the key-4 status change
+  latch from a caller-supplied hardware sample.
+  `storage/module0_media_transfer_plan.hpp` maps device-0 single/multiple-block
+  command selection and stop conditions without performing transfers.
+  `storage/module0_media_fifo_plan.hpp` models receive word and tail sizing
+  without reading memory-mapped FIFO registers.
+  `storage/module0_media_command_status.hpp` maps post-poll command result
+  codes and response-copy flags without issuing commands.
+  `storage/module0_media_host_init_plan.hpp` records controller bases,
+  per-device pinmux writes, reset polling and setup register values without
+  touching hardware.
+  `storage/module0_media_irq_plan.hpp` plans FIFO word movement, cursor
+  updates, event flags and status acknowledgements without executing the ISR.
   `module8_transfer.hpp` preserves the file/device overlay's alternating
   16-sector callback and device-read steps without assigning a direction to
   its unresolved module-entry operation.
+  `module0_selection_navigation.hpp` models the signed repeated-step wrapper
+  around the storage-backed category selector, including its 16-bit counter
+  wrap and early return on a nonzero selection result; category labels and
+  event registration remain unresolved.
+  `module0_extension_filter.hpp` models the shared three-byte, packed-list
+  filter predicate and its wildcard and flag-bit behavior.
+  `module0_browser_count_cache.hpp` models the six-slot lookup and
+  round-robin replacement for filtered-file and directory counts; cache key
+  meanings remain opaque.
+  `module0_directory_bucket_index.hpp` models the observed count-prefix map
+  over already ordered directory buckets and the cursor-7 pending-directory
+  backtrack choice; it does not enumerate or populate the buckets.
+  `module0_fat_directory_filter.hpp` models the FAT-like directory-entry
+  rejection rules from module 0; it does not apply to the custom-record or
+  sector-backed scanner branches. `module0_fat_directory_record.hpp` models
+  the reader's observed 32-byte entry end-marker normalization.
+  `module0_fat_volume.hpp` models module 0's boot-sector probe, selected exFAT
+  geometry checks, FAT-entry address calculation, chain-step bounds, and
+  cluster-count thresholds that select the FAT volume type; it does not mount
+  media.
+  `module0_mbr_probe.hpp` mirrors the module 0 MBR check and extracts the first
+  partition entry's start LBA; it does not validate a partition filesystem.
 - `include/echo/usb/`: bounded stream ring/transfer blocks and Mass Storage
   command-wrapper parsing.
 - `include/echo/apps/`: reconstructed Music, Browser, Radio, Recorder, Video,
